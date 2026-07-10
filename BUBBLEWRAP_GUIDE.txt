@@ -1,0 +1,501 @@
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║         GEOSURVEY PRO — BUBBLEWRAP ANDROID APP BUNDLING GUIDE                  ║
+║         Convert your PWA Website into a Real Android APK                       ║
+║         Author: Prasad Gawade  |  Version: 2.4.1  |  July 2026                ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  WHAT IS BUBBLEWRAP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Bubblewrap is an official Google CLI tool that packages a Progressive Web App
+  (PWA) into an Android APK using "Trusted Web Activity" (TWA) technology.
+
+  TWA = Your website runs in Chrome on Android but looks and feels like a
+  native app — fullscreen, no browser UI, with access to device GPS, camera,
+  push notifications, and offline mode.
+
+  ✅ No need to rewrite in Flutter or React Native
+  ✅ 100% of your HTML/CSS/JS code runs unchanged
+  ✅ Publishable to Google Play Store
+  ✅ Supports GPS, Camera, Offline via PWA service worker
+  ✅ Signed APK for sideloading or Play Store
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PREREQUISITES — INSTALL THESE FIRST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. NODE.JS (v16 or higher)
+     Download: https://nodejs.org/en/download
+     Check version: node --version
+     Required version: v16.x or v18.x (recommended)
+
+  2. JAVA DEVELOPMENT KIT (JDK 11)
+     Download: https://adoptium.net/temurin/releases/?version=11
+     → Choose: Windows x64 .msi installer
+     After install, set JAVA_HOME environment variable:
+       → System Properties → Advanced → Environment Variables
+       → New System Variable:
+         Variable Name:  JAVA_HOME
+         Variable Value: C:\Program Files\Eclipse Adoptium\jdk-11.x.x.x-hotspot
+       → Edit PATH → Add: %JAVA_HOME%\bin
+     Check version: java -version   (should show version 11)
+
+  3. ANDROID COMMAND LINE TOOLS
+     Download: https://developer.android.com/studio#command-line-tools-only
+     → Download "Command line tools only" for Windows
+     Extract to: C:\Android\cmdline-tools\latest\
+     Structure should be:
+       C:\Android\cmdline-tools\latest\bin\sdkmanager.bat
+       C:\Android\cmdline-tools\latest\bin\avdmanager.bat
+
+     Set ANDROID_HOME environment variable:
+       Variable Name:  ANDROID_HOME
+       Variable Value: C:\Android
+     Add to PATH:
+       C:\Android\cmdline-tools\latest\bin
+       C:\Android\platform-tools
+
+     Install required SDK components (run in PowerShell as Admin):
+       sdkmanager --install "platforms;android-33"
+       sdkmanager --install "build-tools;33.0.2"
+       sdkmanager --install "platform-tools"
+
+     Accept licenses:
+       sdkmanager --licenses
+
+  4. BUBBLEWRAP CLI
+     Run in PowerShell:
+       npm install -g @bubblewrap/cli
+     Verify:
+       bubblewrap --version
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 1 — HOST YOUR PWA (REQUIRED FOR BUBBLEWRAP)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Bubblewrap requires your app to be served over HTTPS (not file://).
+  You have 3 options:
+
+  ─────────────────────────────────────────────────────
+  OPTION A: Netlify Drop (Easiest — FREE, 2 minutes)
+  ─────────────────────────────────────────────────────
+  1. Go to: https://app.netlify.com/drop
+  2. Drag your folder: C:\Users\Prasad\Downloads\geotrack-pro\geosurvey-app\
+  3. Wait for upload (~ 30 seconds)
+  4. You get a URL like: https://amazing-name-123.netlify.app
+  5. Your manifest will be at:
+       https://amazing-name-123.netlify.app/manifest.json
+
+  ─────────────────────────────────────────────────────
+  OPTION B: GitHub Pages (FREE, permanent hosting)
+  ─────────────────────────────────────────────────────
+  1. Create a GitHub account at https://github.com
+  2. Create a new repository named: geosurvey-pro
+  3. Upload all files from: geotrack-pro\geosurvey-app\
+  4. Go to Repository → Settings → Pages
+  5. Source: Deploy from a branch → main → /(root) → Save
+  6. Your app URL: https://YOUR-USERNAME.github.io/geosurvey-pro/
+  7. Manifest URL: https://YOUR-USERNAME.github.io/geosurvey-pro/manifest.json
+
+  ─────────────────────────────────────────────────────
+  OPTION C: Local HTTPS with serve + ngrok (Quick test)
+  ─────────────────────────────────────────────────────
+  1. Install serve:
+       npm install -g serve
+  2. Serve the app:
+       serve C:\Users\Prasad\Downloads\geotrack-pro\geosurvey-app -p 3000
+  3. Install ngrok: https://ngrok.com/download
+  4. Expose locally:
+       ngrok http 3000
+  5. Use the https:// URL provided by ngrok
+  6. Manifest URL: https://xxxx.ngrok.io/manifest.json
+
+
+  ► NOTE: For production Play Store release, use Option A or B (permanent URL).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 2 — GENERATE PWA ICONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Your app needs icons in multiple sizes. Use one of these methods:
+
+  ─────────────────────────────────────────────────────
+  METHOD 1: PWA Asset Generator (Online — Easiest)
+  ─────────────────────────────────────────────────────
+  1. Go to: https://www.pwabuilder.com/imageGenerator
+     OR:     https://maskable.app/editor
+  2. Upload any square image (your logo, 512x512 recommended)
+  3. Download the icon pack
+  4. Place all icons in: geosurvey-app\icons\
+     Required files:
+       icons/icon-72.png
+       icons/icon-96.png
+       icons/icon-128.png
+       icons/icon-144.png
+       icons/icon-152.png
+       icons/icon-192.png
+       icons/icon-384.png
+       icons/icon-512.png
+
+  ─────────────────────────────────────────────────────
+  METHOD 2: Node.js Script (Auto-generate)
+  ─────────────────────────────────────────────────────
+  1. Install canvas package:
+       cd C:\Users\Prasad\Downloads\geotrack-pro\geosurvey-app
+       npm install canvas
+  2. Run generator:
+       node generate-icons.js
+  3. Icons will appear in: geosurvey-app\icons\
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 3 — INITIALIZE BUBBLEWRAP PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Create a new folder for the Android project:
+       mkdir C:\Users\Prasad\Downloads\geotrack-pro\android-app
+       cd C:\Users\Prasad\Downloads\geotrack-pro\android-app
+
+  2. Run Bubblewrap init with your manifest URL:
+       bubblewrap init --manifest https://YOUR-APP-URL/manifest.json
+
+     Example (Netlify):
+       bubblewrap init --manifest https://amazing-name-123.netlify.app/manifest.json
+
+     Example (GitHub Pages):
+       bubblewrap init --manifest https://prasad-gawade2003.github.io/geosurvey-pro/manifest.json
+
+  3. Bubblewrap will ask you a series of questions:
+     (Press ENTER to accept defaults, or type your value)
+
+     ┌────────────────────────────────────────────────────────────┐
+     │ Question                    │ Your Answer                  │
+     ├────────────────────────────────────────────────────────────┤
+     │ Application name            │ GeoSurvey Pro                │
+     │ Short name                  │ GeoSurvey                    │
+     │ Package ID                  │ com.prasad.geosurvey         │
+     │ Start URL                   │ /  (press Enter)             │
+     │ Theme color                 │ #f97316  (press Enter)       │
+     │ Background color            │ #0c0f0d  (press Enter)       │
+     │ Display mode                │ standalone  (press Enter)    │
+     │ Icon URL                    │ (auto-detected from manifest)│
+     │ Signing key                 │ (new key — see Step 4)       │
+     │ Android SDK path            │ C:\Android                   │
+     │ JDK path                    │ C:\Program Files\Eclipse ... │
+     └────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 4 — CREATE SIGNING KEYSTORE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Every Android APK must be digitally signed. Create your keystore file:
+
+  Run in PowerShell:
+    keytool -genkeypair -v `
+      -keystore geosurvey.keystore `
+      -alias geosurvey `
+      -keyalg RSA `
+      -keysize 2048 `
+      -validity 10000
+
+  You will be asked:
+    Enter keystore password:  [choose a strong password, e.g.: GeoSurvey@2026]
+    Re-enter password:        [same password again]
+    First and last name:      Prasad Gawade
+    Organizational unit:      Field Survey
+    Organization:             GeoTrack Pro
+    City or Locality:         Nagpur
+    State or Province:        Maharashtra
+    Country code (XX):        IN
+    Is this correct? [no]:    yes
+
+  ⚠️  IMPORTANT: Save the keystore file and password securely.
+      You will need the SAME keystore to publish updates to Play Store.
+      If you lose it, you cannot update your app on Play Store.
+
+  Save location: C:\Users\Prasad\Downloads\geotrack-pro\android-app\geosurvey.keystore
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 5 — BUILD THE APK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  From your android-app folder:
+
+    cd C:\Users\Prasad\Downloads\geotrack-pro\android-app
+    bubblewrap build
+
+  This will:
+    → Compile your TWA Android project using Gradle
+    → Sign the APK with your keystore
+    → Output 2 files:
+
+    app-release-signed.apk   ← Install directly on Android (sideload)
+    app-release-bundle.aab   ← Upload to Google Play Store
+
+  Build time: 3–10 minutes on first run (downloads Gradle)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 6 — TEST ON YOUR ANDROID PHONE (SIDELOAD APK)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Method A: USB Transfer
+  ─────────────────────
+  1. Connect Android phone via USB
+  2. Enable "File Transfer" mode on phone
+  3. Copy app-release-signed.apk to phone Downloads folder
+  4. On phone: Open Files app → Downloads → Tap the APK
+  5. Allow "Install unknown apps" when prompted
+  6. Tap Install → Open
+
+  Method B: ADB Install
+  ──────────────────────
+  1. Enable Developer Options on phone:
+       Settings → About Phone → Tap "Build number" 7 times
+  2. Enable USB Debugging:
+       Settings → Developer Options → USB Debugging → ON
+  3. Connect phone via USB, run:
+       adb install app-release-signed.apk
+
+  Method C: QR Code / Email
+  ──────────────────────────
+  1. Upload APK to Google Drive
+  2. Share the link with yourself
+  3. Download and install on phone
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 7 — DIGITAL ASSET LINKS (Required for full-screen TWA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Without this, the app will show a Chrome address bar at the top.
+  To get true fullscreen (no browser UI), create this file on your server:
+
+  File: /.well-known/assetlinks.json
+  URL:  https://your-app-url/.well-known/assetlinks.json
+
+  Content:
+  [
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.prasad.geosurvey",
+        "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT"]
+      }
+    }
+  ]
+
+  Get your SHA256 fingerprint by running:
+    keytool -list -v -keystore geosurvey.keystore -alias geosurvey
+
+  Look for the "SHA256:" line in the output and paste it above.
+
+  For Netlify: Create file at geosurvey-app\.well-known\assetlinks.json
+  (Netlify will serve it at the correct URL automatically)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPTIONAL: PUBLISH TO GOOGLE PLAY STORE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Create Google Play Developer Account:
+       https://play.google.com/console
+       One-time fee: $25 USD
+
+  2. Create a new app in Play Console:
+       → All apps → Create app
+       → Name: GeoSurvey Pro
+       → Type: App
+       → Free/Paid: Free
+       → Declarations: check all
+
+  3. Complete all required sections:
+       → Main store listing (description, screenshots)
+       → Content rating questionnaire
+       → Target audience
+       → Privacy policy URL (required)
+       → App access (all features available without restriction)
+
+  4. Upload .aab file:
+       → Production → Create new release → Upload app-release-bundle.aab
+
+  5. Submit for review (takes 3–7 days for first release)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ALTERNATIVE: PWA BUILDER (Even Easier — No CLI needed)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Microsoft PWABuilder is a free online tool that does the same as Bubblewrap
+  but through a website UI — no terminal commands needed!
+
+  Steps:
+  1. Host your app (Netlify drop — see Step 1, Option A)
+  2. Go to: https://www.pwabuilder.com
+  3. Enter your app URL and click "Start"
+  4. It will scan your manifest and service worker
+  5. Click "Package for Stores" → Android
+  6. Download the APK and AAB files
+  7. Done!
+
+  ✅ PWABuilder is the EASIEST option if you want to avoid the terminal setup.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  QUICK COMMAND REFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Install Bubblewrap:
+    npm install -g @bubblewrap/cli
+
+  Initialize project:
+    bubblewrap init --manifest https://your-url/manifest.json
+
+  Build APK:
+    bubblewrap build
+
+  Update existing project:
+    bubblewrap update
+
+  Validate your PWA:
+    bubblewrap validate --url https://your-url
+
+  Create keystore:
+    keytool -genkeypair -v -keystore geosurvey.keystore -alias geosurvey -keyalg RSA -keysize 2048 -validity 10000
+
+  Get SHA256 fingerprint:
+    keytool -list -v -keystore geosurvey.keystore -alias geosurvey
+
+  Install APK via ADB:
+    adb install app-release-signed.apk
+
+  Serve locally for testing:
+    npx serve . -p 3000
+
+  Check PWA score (Lighthouse):
+    → Open Chrome → F12 → Lighthouse tab → Generate report
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  PROBLEM: "bubblewrap" is not recognized
+  SOLUTION: Restart PowerShell after running npm install -g @bubblewrap/cli
+            Or run: npx @bubblewrap/cli init --manifest ...
+
+  PROBLEM: JAVA_HOME not set
+  SOLUTION: Set JAVA_HOME environment variable (see Prerequisites section)
+            Restart PowerShell after setting it
+
+  PROBLEM: Android SDK not found
+  SOLUTION: Set ANDROID_HOME to C:\Android
+            Run: sdkmanager --install "platforms;android-33" "build-tools;33.0.2"
+
+  PROBLEM: Build fails with Gradle error
+  SOLUTION: Run: bubblewrap update
+            Or delete the android-app folder and re-run bubblewrap init
+
+  PROBLEM: App shows browser URL bar (not fullscreen)
+  SOLUTION: Create the assetlinks.json file (see Step 7)
+            Wait 24 hours after publishing for Google to verify
+
+  PROBLEM: Camera / GPS not working in TWA
+  SOLUTION: Your manifest.json must declare permissions
+            The website must be served over HTTPS
+            Service worker must be registered correctly
+
+  PROBLEM: "NET::ERR_CERT_AUTHORITY_INVALID" error
+  SOLUTION: Your app MUST use HTTPS. Use Netlify / GitHub Pages.
+            Never use HTTP or local file:// URLs with Bubblewrap.
+
+  PROBLEM: Service Worker not registered
+  SOLUTION: Open Chrome DevTools → Application → Service Workers
+            Check that sw.js appears as "activated and running"
+            Make sure you're on HTTPS
+
+  PROBLEM: Manifest parse error
+  SOLUTION: Validate your manifest.json at:
+            https://manifest-validator.appspot.com/
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FILE STRUCTURE AFTER COMPLETE SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  geotrack-pro\
+  │
+  ├── geosurvey-app\                  ← Your PWA Web App
+  │   ├── index.html                  ← Main app file
+  │   ├── style.css                   ← Stylesheet
+  │   ├── app.js                      ← Application logic
+  │   ├── manifest.json               ← PWA manifest ✅
+  │   ├── sw.js                       ← Service worker ✅
+  │   ├── generate-icons.js           ← Icon generator script
+  │   ├── icons\                      ← App icons (generate these!)
+  │   │   ├── icon-72.png
+  │   │   ├── icon-96.png
+  │   │   ├── icon-128.png
+  │   │   ├── icon-144.png
+  │   │   ├── icon-152.png
+  │   │   ├── icon-192.png
+  │   │   ├── icon-384.png
+  │   │   └── icon-512.png
+  │   └── .well-known\
+  │       └── assetlinks.json         ← For fullscreen TWA (Step 7)
+  │
+  └── android-app\                    ← Generated by Bubblewrap
+      ├── app\                        ← Android project
+      ├── gradle\
+      ├── build.gradle
+      ├── geosurvey.keystore          ← Your signing key (keep safe!)
+      ├── app-release-signed.apk      ← Install this on Android
+      └── app-release-bundle.aab      ← Upload to Play Store
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RECOMMENDED TOOL URLS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Bubblewrap GitHub:        https://github.com/GoogleChromeLabs/bubblewrap
+  Bubblewrap Docs:          https://developer.chrome.com/docs/android/trusted-web-activity/
+  PWABuilder (no-code):     https://www.pwabuilder.com
+  Netlify Drop:             https://app.netlify.com/drop
+  GitHub Pages:             https://pages.github.com
+  Lighthouse PWA Audit:     https://web.dev/measure/
+  Manifest Validator:       https://manifest-validator.appspot.com/
+  Icon Generator:           https://www.pwabuilder.com/imageGenerator
+  Maskable Icon Editor:     https://maskable.app/editor
+  Android SDK Tools:        https://developer.android.com/studio#command-line-tools-only
+  JDK 11 Download:          https://adoptium.net/temurin/releases/?version=11
+  Play Console:             https://play.google.com/console
+  ADB Guide:                https://developer.android.com/tools/adb
+  TWA Documentation:        https://developer.chrome.com/docs/android/trusted-web-activity/
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SUMMARY — FASTEST PATH TO APK (15 Minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Go to https://app.netlify.com/drop
+     Drag folder: geotrack-pro\geosurvey-app\
+     Get URL: https://random-name.netlify.app
+
+  2. Go to https://www.pwabuilder.com
+     Enter: https://random-name.netlify.app
+     Click "Package for Stores" → Android → Download
+
+  3. Transfer APK to your Android phone
+  4. Install and test!
+
+  Total time: ~15 minutes with no code changes needed.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Created by Antigravity AI for Prasad Gawade  |  GeoTrack Pro  |  July 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
